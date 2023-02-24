@@ -46,6 +46,7 @@ export class ExpressAppConfig {
     const logger = appOptions.logger || defaultLogger;
     if (appOptions.logger) {
       this.app.use(logger.logMW)
+      console.log(`{ExpressAppConfig} logMW called`);
     } else {
       this.app.use(this.configureLogger(appOptions.logging, logger));
     }

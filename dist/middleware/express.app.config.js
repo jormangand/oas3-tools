@@ -12,7 +12,6 @@ const defaultLogger = require("morgan");
 const fs = require("fs");
 const jsyaml = require("js-yaml");
 const OpenApiValidator = require("express-openapi-validator");
-//const loggerPorter = require('porter-modules-log')({name: "bsfactory:main"});
 class ExpressAppConfig {
     constructor(definitionPath, appOptions, customMiddlewareFns) {
         console.log(`{ExpressAppConfig} ctr`);
@@ -31,7 +30,11 @@ class ExpressAppConfig {
         this.app.use(bodyParser.json());
         this.app.use(bodyParser.raw({ type: 'application/pdf' }));
         const logger = appOptions.logger || defaultLogger;
-        if (!appOptions.logger) {
+        if (appOptions.logger) {
+            this.app.use(logger.logMW);
+            console.log(`{ExpressAppConfig} logMW called`);
+        }
+        else {
             this.app.use(this.configureLogger(appOptions.logging, logger));
         }
         this.app.use(express.json());
@@ -67,7 +70,9 @@ class ExpressAppConfig {
             }
             if (loggerOptions.errorLimit != undefined
                 && (typeof loggerOptions.errorLimit === 'string' || typeof loggerOptions.errorLimit === 'number')) {
-                options['skip'] = function (req, res) { return res.statusCode < parseInt(loggerOptions.errorLimit); };
+                options['skip'] = function (req, res) {
+                    return res.statusCode < parseInt(loggerOptions.errorLimit);
+                };
             }
         }
         return logger(format, options);
