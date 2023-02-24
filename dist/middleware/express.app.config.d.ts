@@ -6,9 +6,9 @@ export declare class ExpressAppConfig {
     private routingOptions;
     private definitionPath;
     private openApiValidatorOptions;
-    constructor(definitionPath: string, appOptions: Oas3AppOptions, customMiddlewares?: OpenApiRequestHandler[]);
+    constructor(definitionPath: string, appOptions: Oas3AppOptions, customMiddlewareFns?: OpenApiRequestHandler[]);
     private setOpenApiValidatorOptions;
-    configureLogger(loggerOptions: any): any;
+    configureLogger(loggerOptions: any, logger: any): any;
     private errorHandler;
     getApp(): express.Application;
 }

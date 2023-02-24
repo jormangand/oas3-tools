@@ -7,7 +7,7 @@ import cors = require('cors');
 import { SwaggerUI } from './swagger.ui';
 import { SwaggerRouter } from './swagger.router';
 import { SwaggerParameters } from './swagger.parameters';
-import * as logger from 'morgan';
+import * as defaultLogger from 'morgan';
 import * as fs from 'fs';
 import * as jsyaml from 'js-yaml';
 import * as OpenApiValidator from 'express-openapi-validator';
@@ -20,16 +20,21 @@ export class ExpressAppConfig {
     private definitionPath;
     private openApiValidatorOptions;
 
-    constructor(definitionPath: string, appOptions: Oas3AppOptions, customMiddlewares?: OpenApiRequestHandler[]) {
+    constructor(definitionPath: string,
+                appOptions: Oas3AppOptions,
+                customMiddlewareFns?: OpenApiRequestHandler[]
+                ) {
+        console.log(`{ExpressAppConfig} ctr`);
         this.definitionPath = definitionPath;
         this.routingOptions = appOptions.routing;
         this.setOpenApiValidatorOptions(definitionPath, appOptions);
 
         // Create new express app only if not passed by options
         this.app = appOptions.app || express();
+        console.log(`{ExpressAppConfig} express`);
+        (customMiddlewareFns || []).forEach(fn => this.app.use(fn));
 
         this.app.use(cors(appOptions.cors));
-
         const spec = fs.readFileSync(definitionPath, 'utf8');
         const swaggerDoc = jsyaml.safeLoad(spec);
 
@@ -38,7 +43,10 @@ export class ExpressAppConfig {
         this.app.use(bodyParser.json());
         this.app.use(bodyParser.raw({ type: 'application/pdf' }));
 
-        this.app.use(this.configureLogger(appOptions.logging));
+        const logger = appOptions.logger || defaultLogger;
+        if (!appOptions.logger) {
+            this.app.use(this.configureLogger(appOptions.logging, logger));
+        }
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: false }));
         this.app.use(cookieParser());
@@ -49,7 +57,7 @@ export class ExpressAppConfig {
         this.app.use(OpenApiValidator.middleware(this.openApiValidatorOptions));
         this.app.use(new SwaggerParameters().checkParameters());
         // Bind custom middlewares which need access to the OpenApiRequest context before controllers initialization
-        (customMiddlewares || []).forEach(middleware => this.app.use(middleware))
+        //(postMiddlewareFns || []).forEach(fn => this.app.use(fn))
         this.app.use(new SwaggerRouter().initialize(this.routingOptions));
 
         this.app.use(this.errorHandler);
@@ -69,7 +77,7 @@ export class ExpressAppConfig {
         this.openApiValidatorOptions.apiSpec = definitionPath;
     }
 
-    public configureLogger(loggerOptions) {
+    public configureLogger(loggerOptions, logger) {
         let format = 'dev';
         let options: {} = {};
 

@@ -9,5 +9,6 @@ export declare class Oas3AppOptions {
     swaggerUI: SwaggerUiOptions;
     app: express.Application;
     cors: any;
-    constructor(routingOpts: any, openApiValidatorOpts: OpenApiValidatorOpts, logging: LoggingOptions, swaggerUI: SwaggerUiOptions, app: express.Application, cors: any);
+    logger: any;
+    constructor(routingOpts: any, openApiValidatorOpts: OpenApiValidatorOpts, logging: LoggingOptions, swaggerUI: SwaggerUiOptions, app: express.Application, cors: any, logger: any);
 }
