@@ -24,14 +24,14 @@ export class ExpressAppConfig {
               appOptions: Oas3AppOptions,
               customMiddlewareFns?: OpenApiRequestHandler[]
   ) {
-    console.log(`{ExpressAppConfig} ctr`);
+    console.log(`{ExpressAppConfig} ctr 2`);
     this.definitionPath = definitionPath;
     this.routingOptions = appOptions.routing;
     this.setOpenApiValidatorOptions(definitionPath, appOptions);
 
     // Create new express app only if not passed by options
     this.app = appOptions.app || express();
-    console.log(`{ExpressAppConfig} express`);
+    console.log(`{ExpressAppConfig} express- customMiddlewareFns:`, customMiddlewareFns);
     (customMiddlewareFns || []).forEach(fn => this.app.use(fn));
 
     this.app.use(cors(appOptions.cors));
@@ -44,18 +44,21 @@ export class ExpressAppConfig {
     this.app.use(bodyParser.raw({type: 'application/pdf'}));
 
     const logger = appOptions.logger || defaultLogger;
+    const {log} = logger;
     if (appOptions.logger) {
       this.app.use(logger.logMW)
       console.log(`{ExpressAppConfig} logMW called`);
-    } else {
-      this.app.use(this.configureLogger(appOptions.logging, logger));
+      log.debug(`{ExpressAppConfig} logger/logMW`);
     }
+    // else {
+    //   this.app.use(this.configureLogger(appOptions.logging, logger));
+    // }
     this.app.use(express.json());
     this.app.use(express.urlencoded({extended: false}));
     this.app.use(cookieParser());
 
-    const swaggerUi = new SwaggerUI(swaggerDoc, appOptions.swaggerUI);
-    this.app.use(swaggerUi.serveStaticContent());
+    // const swaggerUi = new SwaggerUI(swaggerDoc, appOptions.swaggerUI);
+    // this.app.use(swaggerUi.serveStaticContent());
 
     this.app.use(OpenApiValidator.middleware(this.openApiValidatorOptions));
     this.app.use(new SwaggerParameters().checkParameters());

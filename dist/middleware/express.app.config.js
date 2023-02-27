@@ -5,7 +5,6 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const swagger_ui_1 = require("./swagger.ui");
 const swagger_router_1 = require("./swagger.router");
 const swagger_parameters_1 = require("./swagger.parameters");
 const defaultLogger = require("morgan");
@@ -14,13 +13,13 @@ const jsyaml = require("js-yaml");
 const OpenApiValidator = require("express-openapi-validator");
 class ExpressAppConfig {
     constructor(definitionPath, appOptions, customMiddlewareFns) {
-        console.log(`{ExpressAppConfig} ctr`);
+        console.log(`{ExpressAppConfig} ctr 2`);
         this.definitionPath = definitionPath;
         this.routingOptions = appOptions.routing;
         this.setOpenApiValidatorOptions(definitionPath, appOptions);
         // Create new express app only if not passed by options
         this.app = appOptions.app || express();
-        console.log(`{ExpressAppConfig} express`);
+        console.log(`{ExpressAppConfig} express- customMiddlewareFns:`, customMiddlewareFns);
         (customMiddlewareFns || []).forEach(fn => this.app.use(fn));
         this.app.use(cors(appOptions.cors));
         const spec = fs.readFileSync(definitionPath, 'utf8');
@@ -30,18 +29,20 @@ class ExpressAppConfig {
         this.app.use(bodyParser.json());
         this.app.use(bodyParser.raw({ type: 'application/pdf' }));
         const logger = appOptions.logger || defaultLogger;
+        const { log } = logger;
         if (appOptions.logger) {
             this.app.use(logger.logMW);
             console.log(`{ExpressAppConfig} logMW called`);
+            log.debug(`{ExpressAppConfig} logger/logMW`);
         }
-        else {
-            this.app.use(this.configureLogger(appOptions.logging, logger));
-        }
+        // else {
+        //   this.app.use(this.configureLogger(appOptions.logging, logger));
+        // }
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: false }));
         this.app.use(cookieParser());
-        const swaggerUi = new swagger_ui_1.SwaggerUI(swaggerDoc, appOptions.swaggerUI);
-        this.app.use(swaggerUi.serveStaticContent());
+        // const swaggerUi = new SwaggerUI(swaggerDoc, appOptions.swaggerUI);
+        // this.app.use(swaggerUi.serveStaticContent());
         this.app.use(OpenApiValidator.middleware(this.openApiValidatorOptions));
         this.app.use(new swagger_parameters_1.SwaggerParameters().checkParameters());
         // Bind custom middlewares which need access to the OpenApiRequest context before controllers initialization
